@@ -1,35 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using my_todo_list.Models;
 
-namespace my_todo_list.Data;
-
-public partial class TodoDbContext : DbContext
+namespace my_todo_list.Data
 {
-    public TodoDbContext()
+    public partial class todoDBContext : DbContext
     {
-    }
+        public todoDBContext()
+        {
+        }
 
-    public TodoDbContext(DbContextOptions<TodoDbContext> options)
-        : base(options)
-    {
-    }
+        public todoDBContext(DbContextOptions<todoDBContext> options)
+            : base(options)
+        {
+        }
 
-    public void ConfigureServices(IServiceCollection services)
-    {
-        services.AddControllers();
+        public virtual DbSet<Todo> Todos { get; set; } = null!;
 
-        services.AddEntityFrameworkSqlite().AddDbContext<TodoDbContext>();
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlite("Data Source=todoDB.db;Cache=Shared");
+                optionsBuilder.UseSqlite("Data Source=todoDB.db;Cache=Shared");
+            }
+        }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        OnModelCreatingPartial(modelBuilder);
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Todo>(entity =>
+            {
+                entity.ToTable("todo");
+
+                entity.HasIndex(e => e.Id, "IX_todo_id")
+                    .IsUnique();
+
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.TodoTitle).HasColumnName("todo_title");
+            });
+
+            OnModelCreatingPartial(modelBuilder);
+        }
+
+        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
